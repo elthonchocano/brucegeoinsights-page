@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bruce GeoInsights - Connecting Earth Science to Modern Business</title>
+    <!-- Favicon / Page Icon (CORRECTED FILENAME) -->
+    <link rel="icon" type="image/jpeg" href="lightbulb_icon.png">
+    <!-- Load Inter font and Tailwind CSS -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        /* Custom styles for the dark background and subtle textures */
+        body {
+            background-color: #1B1C1D; /* Primary Dark */
+            color: #E0E0E0;
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+        }
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-thumb { background-color: #385C4D; border-radius: 4px; }
+        ::-webkit-scrollbar-track { background-color: #1B1C1D; }
+
+        .page-content {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+        }
+        .page-content.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Subtle dark texture effect for the hero/header */
+        .hero-bg {
+            background: linear-gradient(135deg, rgba(27, 28, 29, 0.95) 0%, rgba(27, 28, 29, 0.9) 100%);
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* Hero section specific background */
+        #home-page {
+            min-height: 70vh;
+            background: radial-gradient(circle at 75% 10%, rgba(56, 92, 77, 0.1) 0%, transparent 70%),
+                        linear-gradient(180deg, rgba(27, 28, 29, 0.9) 0%, rgba(27, 28, 29, 1) 100%);
+        }
+    </style>
+
+    <script>
+        // Custom Tailwind Configuration for branded colors
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary-dark': '#1B1C1D', // Main background (Dark Slate)
+                        'accent-green': '#385C4D', // Main text/theme color (Deep Forest Green)
+                        'accent-gold': '#FFC300', // Highlight/CTA color (Warm Gold)
+                        'text-light': '#E0E0E0', // Light text for readability
+                        // Colors for the lightbulb logo's earth layers - no longer needed as we use an image
+                        'layer-red': '#8B4543',
+                        'layer-brown': '#654321',
+                        'layer-dark-green': '#284534',
+                    },
+                    boxShadow: {
+                        'gold-glow': '0 0 10px rgba(255, 195, 0, 0.6)',
+                    }
+                }
+            }
+        }
+
+        // Global state for navigation
+        let currentPage = null;
+
+        /**
+         * Switches the active content view.
+         * @param {string} pageId - The ID of the page to show ('home', 'services', 'about', 'contact').
+         */
+        function navigate(pageId) {
+            // Allow the first run (when currentPage is null) to proceed
+            if (pageId === currentPage) return;
+
+            const pages = document.querySelectorAll('.page-content');
+            pages.forEach(page => {
+                page.classList.remove('active');
+                page.classList.add('hidden');
+            });
+
+            const targetPage = document.getElementById(pageId + '-page');
+            if (targetPage) {
+                // Remove hidden first, then add active for transition effect
+                targetPage.classList.remove('hidden');
+                setTimeout(() => targetPage.classList.add('active'), 10);
+                currentPage = pageId;
+                updateNavStyles(pageId);
+                // Scroll to top of the content area for fresh view
+                // This check prevents error if container is not ready (though unlikely here)
+                const container = document.getElementById('main-content-container');
+                if (container) {
+                     container.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            }
+        }
+
+        /**
+         * Updates navigation button styles to show the current active page.
+         * @param {string} activePageId - The ID of the currently active page.
+         */
+        function updateNavStyles(activePageId) {
+            document.querySelectorAll('.nav-link').forEach(link => {
+                // Desktop nav styles
+                link.classList.remove('border-accent-gold', 'text-accent-gold');
+                link.classList.add('border-transparent', 'text-text-light');
+
+                // Mobile nav styles (only color changes applied globally)
+                link.classList.remove('text-accent-gold');
+                link.classList.add('text-text-light');
+            });
+
+            const activeLinks = document.querySelectorAll(`#nav-${activePageId}`);
+            activeLinks.forEach(activeLink => {
+                if (activeLink) {
+                    // Desktop styles
+                    activeLink.classList.remove('border-transparent', 'text-text-light');
+                    activeLink.classList.add('border-accent-gold', 'text-accent-gold');
+
+                    // Mobile styles (only color change needed)
+                    if (!activeLink.classList.contains('sm:flex-col')) { // Heuristic for desktop nav
+                        activeLink.classList.remove('border-transparent');
+                    }
+                    activeLink.classList.add('text-accent-gold');
+                }
+            });
+        }
+
+        /**
+         * Simulates form submission and displays a success message.
+         * @param {Event} event - The form submit event.
+         */
+        function handleSubmit(event) {
+            event.preventDefault();
+            const messageBox = document.getElementById('contact-message');
+            messageBox.textContent = 'Thank you! Your message has been sent to Bruce GeoInsights. We will be in touch shortly.';
+            messageBox.classList.remove('hidden', 'opacity-0');
+            messageBox.classList.add('opacity-100');
+            event.target.reset(); // Clear the form
+
+            setTimeout(() => {
+                messageBox.classList.remove('opacity-100');
+                messageBox.classList.add('opacity-0');
+                setTimeout(() => messageBox.classList.add('hidden'), 500);
+            }, 5000);
+        }
+
+        /**
+         * Copies text to the clipboard and shows confirmation.
+         * @param {string} text - The text to copy.
+         * @param {HTMLElement} element - The button element that triggered the copy.
+         */
+        function copyToClipboard(text, element) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = 0;
+            document.body.appendChild(textarea);
+            textarea.focus();
+            textarea.select();
+
+            try {
+                document.execCommand('copy');
+                const originalText = element.innerHTML;
+                element.innerHTML = '<i class="fa-solid fa-check mr-2"></i> Copied!';
+                setTimeout(() => { element.innerHTML = originalText; }, 2000);
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+            } finally {
+                document.body.removeChild(textarea);
+            }
+        }
+
+        // Initialize the site when the window loads
+        window.onload = function() {
+            navigate('home'); // This ensures the home page displays on load
+            // Attach form submission listener
+            const form = document.getElementById('contact-form');
+            if (form) {
+                form.addEventListener('submit', handleSubmit);
+            }
+        };
+    </script>
+</head>
+
+<body class="bg-primary-dark min-h-screen flex flex-col">
+
+    <!-- Header & Navigation -->
+    <header class="hero-bg shadow-lg z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <!-- Logo Section -->
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="navigate('home')">
+                    <!-- Bruce GeoInsights Logo (CORRECTED FILENAME USED) -->
+                    <img src="lightbulb_icon.png" alt="Bruce GeoInsights Lightbulb Logo" 
+                         class="w-10 h-10 md:w-12 md:h-12 bg-primary-dark object-contain rounded-lg" 
+                         onerror="this.onerror=null; this.src='https://placehold.co/48x48/1B1C1D/FFC300?text=Logo'">
+
+                    <div>
+                        <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-accent-green leading-none">
+                            BRUCE GEO<span class="text-accent-gold">i</span>NSIGHTS
+                        </h1>
+                        <p class="text-xs md:text-sm font-medium text-accent-gold mt-0.5 tracking-wider uppercase">
+                            Connecting Earth Science to Modern Business
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Desktop Navigation -->
+                <nav class="hidden sm:flex space-x-8">
+                    <button id="nav-home" onclick="navigate('home')"
+                            class="nav-link border-b-2 pb-1 transition duration-300 font-semibold text-lg hover:text-accent-gold hover:border-accent-gold">
+                        Home
+                    </button>
+                    <button id="nav-services" onclick="navigate('services')"
+                            class="nav-link border-b-2 pb-1 transition duration-300 font-semibold text-lg hover:text-accent-gold hover:border-accent-gold">
+                        Services
+                    </button>
+                    <button id="nav-about" onclick="navigate('about')"
+                            class="nav-link border-b-2 pb-1 transition duration-300 font-semibold text-lg hover:text-accent-gold hover:border-accent-gold">
+                        About Us
+                    </button>
+                    <button id="nav-contact" onclick="navigate('contact')"
+                            class="nav-link border-b-2 pb-1 transition duration-300 font-semibold text-lg hover:text-accent-gold hover:border-accent-gold">
+                        Contact
+                    </button>
+                </nav>
+
+                <!-- Mobile Menu Button (Optional - could use fixed nav bar instead) -->
+            </div>
+        </div>
+        <!-- Mobile Navigation (Fixed bottom bar) -->
+        <nav class="sm:hidden fixed bottom-0 left-0 right-0 bg-primary-dark/95 backdrop-blur-sm border-t border-accent-green/30 shadow-2xl z-20">
+            <div class="flex justify-around py-3">
+                <button id="nav-home" onclick="navigate('home')"
+                        class="nav-link flex flex-col items-center text-xs transition duration-300 text-text-light hover:text-accent-gold">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l-2 2M13 10v10a1 1 0 01-1 1h-1"/></svg>
+                    <span>Home</span>
+                </button>
+                <button id="nav-services" onclick="navigate('services')"
+                        class="nav-link flex flex-col items-center text-xs transition duration-300 text-text-light hover:text-accent-gold">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    <span>Services</span>
+                </button>
+                <button id="nav-about" onclick="navigate('about')"
+                        class="nav-link flex flex-col items-center text-xs transition duration-300 text-text-light hover:text-accent-gold">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-3H17v3zm0-10h5V7H17v3zm-7 10h5v-3H10v3zM5 10h5V7H5v3zM5 20h5v-3H5v3zm-3 0h2v-3H2v3zM2 10h2V7H2v3z"/></svg>
+                    <span>About Us</span>
+                </button>
+                <button id="nav-contact" onclick="navigate('contact')"
+                        class="nav-link flex flex-col items-center text-xs transition duration-300 text-text-light hover:text-accent-gold">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8m-2 6V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2h14a2 2 0 002-2v-3"/></svg>
+                    <span>Contact</span>
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content Container (Scrollable) -->
+    <main id="main-content-container" class="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 md:py-12 mb-20 sm:mb-0">
+
+        <!-- 1. HOME PAGE (New) -->
+        <section id="home-page" class="page-content hidden flex flex-col justify-center items-center text-center">
+            <div class="max-w-4xl py-12 md:py-24">
+                <p class="text-lg font-semibold text-accent-green mb-4 uppercase tracking-widest">
+                    Geoscience. Data. Discovery.
+                </p>
+                <h2 class="text-5xl sm:text-6xl md:text-7xl font-extrabold leading-tight text-text-light mb-6">
+                    <span class="text-accent-gold block">De-Risking Exploration</span>
+                    With Predictive GeoInsights.
+                </h2>
+                <p class="text-xl text-gray-300 mb-10 max-w-2xl mx-auto">
+                    We transform complex geological and geophysical data into clear, actionable strategies, ensuring your next resource project is founded on scientific certainty.
+                </p>
+
+                <!-- Call to Action Buttons -->
+                <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6">
+                    <button onclick="navigate('services')"
+                            class="px-8 py-4 bg-accent-gold text-primary-dark font-bold rounded-xl text-lg shadow-gold-glow transition duration-300 transform hover:scale-[1.05] active:scale-100">
+                        Explore Our Services
+                    </button>
+                    <button onclick="navigate('contact')"
+                            class="px-8 py-4 bg-primary-dark border-2 border-accent-green text-accent-green font-bold rounded-xl text-lg transition duration-300 hover:bg-accent-green hover:text-primary-dark transform hover:scale-[1.05] active:scale-100">
+                        Book a Consultation
+                    </button>
+                </div>
+            </div>
+
+            <div class="mt-12 w-full max-w-6xl grid grid-cols-1 sm:grid-cols-3 gap-6 text-left">
+                 <div class="p-6 bg-accent-green/20 rounded-xl border border-accent-gold/30">
+                    <h3 class="text-xl font-bold text-accent-gold mb-2">Data Integrity</h3>
+                    <p class="text-sm text-gray-400">Rigorous QA/QC on all field and lab data ensures the foundation of our models is unbreakable.</p>
+                </div>
+                <div class="p-6 bg-accent-green/20 rounded-xl border border-accent-gold/30">
+                    <h3 class="text-xl font-bold text-accent-gold mb-2">Advanced Modeling</h3>
+                    <p class="text-sm text-gray-400">Leveraging AI/ML for 3D subsurface interpretation and target prioritization.</p>
+                </div>
+                <div class="p-6 bg-accent-green/20 rounded-xl border border-accent-gold/30">
+                    <h3 class="text-xl font-bold text-accent-gold mb-2">Global Reach</h3>
+                    <p class="text-sm text-gray-400">Experience across major mineral systems in North America, Africa, and Australia.</p>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- 2. SERVICES PAGE -->
+        <section id="services-page" class="page-content hidden">
+            <h2 class="text-4xl sm:text-5xl font-extrabold text-accent-gold mb-6 border-b-2 border-accent-green pb-2">Our Exploration Services</h2>
+            <p class="text-lg text-text-light mb-10 max-w-3xl">
+                We bridge the gap between complex geological data and strategic business decisions. Our specialized services are designed to maximize discovery potential while minimizing risk.
+            </p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+                <!-- Service 1: Advanced Geoscience Consulting -->
+                <div class="bg-primary-dark p-6 rounded-xl shadow-xl border border-accent-green/50 hover:border-accent-gold transition duration-300 transform hover:scale-[1.02]">
+                    <div class="text-3xl font-bold text-accent-gold mb-3">1. Consulting & Strategy</div>
+                    <h3 class="text-xl font-semibold text-text-light mb-4">Targeted Exploration Program Design</h3>
+                    <p class="text-gray-400">
+                        From greenfield to brownfield projects, we design scientifically robust and cost-effective exploration programs. Our methodology focuses on predictive modeling and risk management.
+                    </p>
+                    <ul class="list-disc list-inside mt-4 text-sm text-gray-400 space-y-1">
+                        <li>Resource Assessment & Valuation</li>
+                        <li>Permitting and Regulatory Guidance</li>
+                        <li>Investment Due Diligence</li>
+                    </ul>
+                </div>
+
+                <!-- Service 2: Remote Sensing & Data Analytics -->
+                <div class="bg-primary-dark p-6 rounded-xl shadow-xl border border-accent-green/50 hover:border-accent-gold transition duration-300 transform hover:scale-[1.02]">
+                    <div class="text-3xl font-bold text-accent-gold mb-3">2. Data Integration</div>
+                    <h3 class="text-xl font-semibold text-text-light mb-4">Big Data Geoscience & AI Integration</h3>
+                    <p class="text-gray-400">
+                        Leveraging advanced machine learning and remote sensing (Satellite, UAV, LiDAR) to analyze massive datasets and rapidly identify subtle geological anomalies.
+                    </p>
+                    <ul class="list-disc list-inside mt-4 text-sm text-gray-400 space-y-1">
+                        <li>Hyperspectral and Multi-spectral Imagery</li>
+                        <li>Geophysical Data Processing (Gravity, Mag)</li>
+                        <li>3D Modeling & Visualization</li>
+                    </ul>
+                </div>
+
+                <!-- Service 3: Target Generation & Validation -->
+                <div class="bg-primary-dark p-6 rounded-xl shadow-xl border border-accent-green/50 hover:border-accent-gold transition duration-300 transform hover:scale-[1.02]">
+                    <div class="text-3xl font-bold text-accent-gold mb-3">3. Field Operations</div>
+                    <h3 class="text-xl font-semibold text-text-light mb-4">Efficient Field & Drilling Management</h3>
+                    <p class="text-gray-400">
+                        Supervision of ground-truthing, sampling, and drilling campaigns with a focus on QA/QC protocols to ensure data integrity from the field to the boardroom.
+                    </p>
+                    <ul class="list-disc list-inside mt-4 text-sm text-gray-400 space-y-1">
+                        <li>Core Logging and Sampling Standards</li>
+                        <li>Structural and Petrological Mapping</li>
+                        <li>Environmental and Social Governance (ESG) Audits</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. ABOUT US PAGE -->
+        <section id="about-page" class="page-content hidden">
+            <h2 class="text-4xl sm:text-5xl font-extrabold text-accent-gold mb-6 border-b-2 border-accent-green pb-2">About Bruce GeoInsights</h2>
+
+            <div class="space-y-8 text-lg">
+                <p class="text-text-light max-w-4xl">
+                    Bruce GeoInsights was founded on a simple premise: that the best exploration decisions are born at the intersection of rigorous Earth Science and cutting-edge business strategy. In an increasingly data-rich but complex industry, we provide the clarity and confidence required to invest in discovery.
+                </p>
+
+                <div class="p-6 bg-accent-green/20 rounded-xl border-l-4 border-accent-gold">
+                    <h3 class="text-2xl font-bold text-accent-gold mb-3">Our Mission</h3>
+                    <p class="text-text-light">
+                        To **de-risk** mineral exploration projects by deploying advanced geological, geophysical, and data science techniques, turning raw data into **actionable insights** for our global clientele.
+                    </p>
+                </div>
+
+                <h3 class="text-3xl font-bold text-accent-green pt-4">The Bruce Advantage</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-primary-dark p-4 rounded-lg shadow-md border-t-2 border-accent-gold">
+                        <p class="font-semibold text-text-light">Integrity & Accuracy</p>
+                        <p class="text-sm text-gray-400">Uncompromising commitment to data quality and ethical reporting standards.</p>
+                    </div>
+                    <div class="bg-primary-dark p-4 rounded-lg shadow-md border-t-2 border-accent-gold">
+                        <p class="font-semibold text-text-light">Innovation-Led</p>
+                        <p class="text-sm text-gray-400">Early adopters of AI, Machine Learning, and remote sensing technologies.</p>
+                    </div>
+                    <div class="bg-primary-dark p-4 rounded-lg shadow-md border-t-2 border-accent-gold">
+                        <p class="font-semibold text-text-light">Global Experience</p>
+                        <p class="text-sm text-gray-400">Decades of combined experience in major mineral systems worldwide.</p>
+                    </div>
+                </div>
+
+                <p class="text-text-light pt-4 max-w-4xl">
+                    Our team consists of geologists, geophysicists, and data scientists who are passionate about responsible and successful mineral exploration. We treat every project not just as a geological problem, but as a business opportunity.
+                </p>
+            </div>
+        </section>
+
+        <!-- 4. CONTACT PAGE -->
+        <section id="contact-page" class="page-content hidden">
+            <h2 class="text-4xl sm:text-5xl font-extrabold text-accent-gold mb-6 border-b-2 border-accent-green pb-2">Contact Bruce GeoInsights</h2>
+            <p class="text-lg text-text-light mb-8 max-w-3xl">
+                Ready to transform your exploration strategy? Get in touch with our team today.
+            </p>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Contact Form -->
+                <div class="lg:col-span-2">
+                    <form id="contact-form" class="space-y-6 bg-primary-dark p-6 sm:p-8 rounded-xl shadow-2xl border border-accent-green/50">
+                        <h3 class="text-2xl font-bold text-text-light">Send Us a Message</h3>
+
+                        <!-- Message Box -->
+                        <div id="contact-message" class="hidden opacity-0 transition duration-500 bg-accent-green/50 p-3 rounded-lg text-text-light font-medium shadow-gold-glow" role="alert"></div>
+
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-text-light mb-1">Full Name</label>
+                            <input type="text" id="name" name="name" required
+                                   class="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 focus:border-accent-gold focus:ring-1 focus:ring-accent-gold text-text-light transition duration-200">
+                        </div>
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-text-light mb-1">Work Email</label>
+                            <input type="email" id="email" name="email" required
+                                   class="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 focus:border-accent-gold focus:ring-1 focus:ring-accent-gold text-text-light transition duration-200">
+                        </div>
+                        <div>
+                            <label for="message" class="block text-sm font-medium text-text-light mb-1">Your Inquiry</label>
+                            <textarea id="message" name="message" rows="4" required
+                                      class="w-full p-3 rounded-lg bg-gray-700 border border-gray-600 focus:border-accent-gold focus:ring-1 focus:ring-accent-gold text-text-light transition duration-200"></textarea>
+                        </div>
+
+                        <button type="submit"
+                                class="w-full sm:w-auto px-6 py-3 bg-accent-gold text-primary-dark font-bold rounded-xl shadow-md hover:bg-yellow-500 transition duration-300 transform hover:scale-[1.02] active:scale-100">
+                            Submit Inquiry
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Contact Info -->
+                <div class="space-y-6">
+                    
+                    <!-- Scheduled Call CTA -->
+                    <div class="p-6 bg-accent-gold/20 rounded-xl border border-accent-gold/50 text-center">
+                        <h4 class="text-xl font-bold text-accent-gold mb-3">Book a 15-Minute Consultation</h4>
+                        <p class="text-sm text-text-light mb-4">
+                            Connect directly with a Senior Geoscientist to discuss your project needs and scope.
+                        </p>
+                        <!-- In a real deployment, replace this placeholder URL with your Calendly/Google Calendar scheduling link -->
+                        <a href="https://calendly.com/brucegeoinsights/introductory-call-15min" target="_blank" rel="noopener noreferrer"
+                           class="inline-block w-full px-6 py-3 bg-accent-gold text-primary-dark font-bold rounded-xl shadow-md hover:bg-yellow-500 transition duration-300 transform hover:scale-[1.03] active:scale-100">
+                            Schedule Call Now
+                        </a>
+                        <p class="text-xs text-gray-400 mt-3">
+                            (Link integrates with a scheduling tool like Google Calendar or Calendly)
+                        </p>
+                    </div>
+
+                    <!-- Social Media Links -->
+                    <div class="p-6 bg-accent-green/20 rounded-xl border border-accent-green/50">
+                        <h4 class="text-xl font-bold text-accent-gold mb-4">Connect With Us</h4>
+                        <div class="flex space-x-6 justify-center">
+                            <!-- LinkedIn -->
+                            <a href="https://linkedin.com/company/brucegeoinsights" target="_blank" rel="noopener noreferrer"
+                               class="text-text-light hover:text-accent-gold transition duration-200">
+                                <!-- LinkedIn Icon (Inline SVG) -->
+                                <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M4.98 3.5c0 1.381-1.11 2.5-2.489 2.5s-2.489-1.119-2.489-2.5 1.11-2.5 2.489-2.5 2.489 1.119 2.489 2.5zm1.501 5.485h-4.981v13.515h4.981v-13.515zm6.758 0h-4.975v13.515h4.975v-7.291c0-2.909 3.327-2.67 3.327 0v7.291h4.975v-8.497c0-4.664-4.881-4.484-6.685-2.261v2.997z"/>
+                                </svg>
+                            </a>
+
+                            <!-- YouTube -->
+                            <a href="https://youtube.com/@brucegeoinsights" target="_blank" rel="noopener noreferrer"
+                               class="text-text-light hover:text-accent-gold transition duration-200">
+                                <!-- YouTube Icon (Inline SVG) -->
+                                <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M19.615 3.197a3.1 3.1 0 00-2.185-2.185c-1.583-.435-8.086-.435-9.67 0a3.1 3.1 0 00-2.185 2.185c-.435 1.583-.435 8.086 0 9.67a3.1 3.1 0 002.185 2.185c1.583.435 8.086.435 9.67 0a3.1 3.1 0 002.185-2.185c.435-1.583.435-8.086 0-9.67zm-8.38 8.415v-5.225l5.05 2.612-5.05 2.613z"/>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+
+
+                    <!-- Existing: Our Details -->
+                    <div class="p-6 bg-accent-green/20 rounded-xl border border-accent-green/50">
+                        <h4 class="text-xl font-bold text-accent-gold mb-3">Our Details</h4>
+
+                        <div class="space-y-4">
+                            <!-- Email -->
+                            <div class="flex flex-col">
+                                <span class="text-sm font-semibold text-accent-green">Email Address</span>
+                                <div class="flex items-center space-x-2">
+                                    <span id="contact-email" class="text-text-light">contact@brucegeoinsights.com</span>
+                                    <button type="button" onclick="copyToClipboard('contact@brucegeoinsights.com', this)"
+                                            class="text-xs text-accent-gold hover:underline transition duration-150">
+                                        Copy
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Phone -->
+                            <div class="flex flex-col">
+                                <span class="text-sm font-semibold text-accent-green">Phone</span>
+                                <span class="text-text-light">+1 (555) GEO-MINE</span>
+                            </div>
+
+                            <!-- Address -->
+                            <div class="flex flex-col">
+                                <span class="text-sm font-semibold text-accent-green">Global Headquarters</span>
+                                <span class="text-text-light">100 Exploration Ave, Geoville, Earth 90210</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-6 bg-accent-green/20 rounded-xl border border-accent-green/50">
+                        <h4 class="text-xl font-bold text-accent-gold mb-3">Business Hours</h4>
+                        <p class="text-text-light">Monday - Friday</p>
+                        <p class="text-text-light">8:00 AM - 5:00 PM (GMT-5)</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-primary-dark border-t border-accent-green/30 py-6 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-400 text-sm">
+            &copy; 2025 Bruce GeoInsights. All rights reserved. | Connecting Earth Science to Modern Business.
+        </div>
+    </footer>
+
+</body>
+</html>
